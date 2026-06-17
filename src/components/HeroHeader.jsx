@@ -1,20 +1,23 @@
+import { useState, useEffect } from 'react'
 import { customer, monthlyUsage } from '../data/sampleData'
 
-// Pre-compute stats from the full 12-month history
-const avg12        = monthlyUsage.reduce((s, m) => s + m.consumed, 0) / monthlyUsage.length
+// Pre-compute stats from the most recent 12 months
+const last12       = monthlyUsage.slice(-12)
+const avg12        = last12.reduce((s, m) => s + m.consumed, 0) / last12.length
 const recent3      = monthlyUsage.slice(-3).reduce((s, m) => s + m.consumed, 0) / 3
 const surplus      = customer.currentPlan - avg12
-const totalWasteGal = monthlyUsage.reduce((s, m) => s + (m.delivered - m.consumed), 0)
+const totalWasteGal = last12.reduce((s, m) => s + (m.delivered - m.consumed), 0)
 const unusedAnnual = Math.round(totalWasteGal * customer.pricePerGallon)
 const bill         = customer.currentPlan * customer.pricePerGallon
 const annualBill   = bill * 12
 const trendDown    = recent3 < avg12 - 0.1   // meaningful downward trend
+const dataSpan     = `${monthlyUsage[0].label} – ${monthlyUsage[monthlyUsage.length - 1].label}`
 
 const stats = [
   {
     label: 'Avg. consumed',
     value: `${avg12.toFixed(1)} gal`,
-    sub: 'per month (12-mo avg)',
+    sub: 'per month (last 12 mo)',
     highlight: false,
   },
   {
@@ -31,6 +34,36 @@ const stats = [
   },
 ]
 
+// ─── Live clock ───────────────────────────────────────────────────────────────
+function LiveClock() {
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+
+  return (
+    <div style={{
+      display:    'flex',
+      alignItems: 'center',
+      gap:        6,
+      fontSize:   12,
+      color:      'var(--text-3)',
+      background: 'var(--bg)',
+      border:     '1px solid var(--border)',
+      borderRadius: 999,
+      padding:    '4px 12px',
+    }}>
+      <span>🕐</span>
+      <span>{dateStr} · <strong style={{ color: 'var(--text-2)' }}>{timeStr}</strong></span>
+    </div>
+  )
+}
+
 export default function HeroHeader() {
   return (
     <header
@@ -38,7 +71,7 @@ export default function HeroHeader() {
       style={{ marginBottom: 28 }}
     >
       {/* Brand bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 24 }}>💧</span>
         <span
           style={{
@@ -51,15 +84,13 @@ export default function HeroHeader() {
         >
           ClearFlow Water
         </span>
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: 12,
-            color: 'var(--text-3)',
-          }}
-        >
-          Member since {customer.memberSince}
+        <span style={{ fontSize: 12, color: 'var(--text-3)', marginLeft: 4 }}>
+          · Data: {dataSpan}
         </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Member since {customer.memberSince}</span>
+          <LiveClock />
+        </div>
       </div>
 
       {/* Main card */}

@@ -7,7 +7,7 @@ const MIN_PLAN = 8
 const MAX_PLAN = 20
 
 // ─── Derived stats (computed once at module level) ────────────────────────────
-const _all          = monthlyUsage
+const _all          = monthlyUsage.slice(-12)   // always use last 12 months
 const _avg12        = _all.reduce((s, m) => s + m.consumed, 0) / _all.length
 const _recent3      = _all.slice(-3).reduce((s, m) => s + m.consumed, 0) / 3
 const _peakLast6    = Math.max(..._all.slice(-6).map(m => m.consumed))

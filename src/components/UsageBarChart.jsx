@@ -7,8 +7,8 @@ const SVG_W    = 720
 const SVG_H    = 276
 const CW       = SVG_W - M.left - M.right   // 620
 const CH       = SVG_H - M.top  - M.bottom  // 182
-const MAX_GAL  = 18
-const Y_TICKS  = [0, 5, 10, 15, 18]
+const MAX_GAL  = 22
+const Y_TICKS  = [0, 5, 10, 15, 20]
 
 const CLR = {
   delivered: '#D4CEC6',
@@ -100,11 +100,11 @@ export default function UsageBarChart() {
 
   const data   = monthlyUsage.slice(-range)
   const groupW = CW / data.length
-  const barW   = Math.max(9, groupW * 0.32)
+  const barW   = Math.max(7, groupW * 0.30)
   const gap    = Math.max(2, groupW * 0.06)
 
-  // Index of 'Aug' in the displayed slice (annotation only for 12-mo view)
-  const augIdx = range === 12 ? data.findIndex((d) => d.month === 'Aug') : -1
+  // Only show every Nth x-axis label to prevent crowding
+  const labelEvery = range >= 24 ? 3 : range >= 12 ? 2 : 1
 
   const handleRange = (r) => {
     setTip(null)
@@ -136,13 +136,13 @@ export default function UsageBarChart() {
             Delivered vs. Consumed
           </h2>
           <p style={{ fontSize: 13, color: 'var(--text-2)' }}>
-            Monthly gallons on your 15-gal plan
+            {range}-month history · {data[0]?.label} – {data[data.length - 1]?.label}
           </p>
         </div>
 
         {/* Range buttons */}
         <div style={{ display: 'flex', gap: 6 }}>
-          {[3, 6, 12].map((r) => (
+          {[6, 12, 24].map((r) => (
             <button
               key={r}
               onClick={() => handleRange(r)}
@@ -223,7 +223,7 @@ export default function UsageBarChart() {
               const delivH  = (d.delivered / MAX_GAL) * CH * progress
               const consH   = (d.consumed  / MAX_GAL) * CH * progress
               return (
-                <g key={d.month}>
+                <g key={`${d.month}-${d.year}`}>
                   {/* Delivered bar */}
                   <rect
                     x={cx - barW - gap / 2}
@@ -232,7 +232,7 @@ export default function UsageBarChart() {
                     height={delivH}
                     fill={CLR.delivered}
                     rx={3}
-                    onMouseEnter={() => setTip({ cx, month: d.month, delivered: d.delivered, consumed: d.consumed, ppg: customer.pricePerGallon })}
+                    onMouseEnter={() => setTip({ cx, month: d.label ?? d.month, delivered: d.delivered, consumed: d.consumed, ppg: customer.pricePerGallon })}
                     onMouseLeave={() => setTip(null)}
                   />
                   {/* Consumed bar */}
@@ -243,61 +243,30 @@ export default function UsageBarChart() {
                     height={consH}
                     fill={CLR.consumed}
                     rx={3}
-                    onMouseEnter={() => setTip({ cx, month: d.month, delivered: d.delivered, consumed: d.consumed, ppg: customer.pricePerGallon })}
+                    onMouseEnter={() => setTip({ cx, month: d.label ?? d.month, delivered: d.delivered, consumed: d.consumed, ppg: customer.pricePerGallon })}
                     onMouseLeave={() => setTip(null)}
                   />
                   {/* X-axis month label */}
-                  <text
-                    x={cx} y={CH + 20}
-                    textAnchor="middle" fontSize={11}
-                    fill="#B8B0A8" fontFamily="Inter,sans-serif"
-                  >
-                    {d.month}
-                  </text>
+                  {i % labelEvery === 0 && (
+                    <text
+                      x={cx} y={CH + 20}
+                      textAnchor="middle" fontSize={range >= 24 ? 9 : 11}
+                      fill="#B8B0A8" fontFamily="Inter,sans-serif"
+                    >
+                      {d.label}
+                    </text>
+                  )}
                 </g>
               )
             })}
-
-            {/* "Gap growing since Aug" callout (12-mo view only) */}
-            {augIdx >= 0 && (
-              <g>
-                {/* Dashed arrow from callout down to the Aug gap area */}
-                {(() => {
-                  const ax = augIdx * groupW + groupW / 2
-                  const bx = Math.max(86, Math.min(ax, CW - 86))
-                  return (
-                    <>
-                      <line
-                        x1={ax} y1={-8}
-                        x2={ax} y2={yp(data[augIdx].consumed) - 3}
-                        stroke="#F59E0B" strokeWidth={1.5} strokeDasharray="4,3"
-                      />
-                      {/* Pill callout */}
-                      <rect
-                        x={bx - 86} y={-38}
-                        width={172} height={26}
-                        rx={13}
-                        fill="#FFFBEB" stroke="#FDE68A" strokeWidth={1}
-                      />
-                      <text
-                        x={bx} y={-21}
-                        textAnchor="middle" fontSize={11}
-                        fill="#B45309" fontWeight={500}
-                        fontFamily="Inter,sans-serif"
-                      >
-                        ↓ gap growing since Aug
-                      </text>
-                    </>
-                  )
-                })()}
-              </g>
-            )}
 
             {/* Tooltip */}
             <ChartTooltip tip={tip} />
           </g>
         </svg>
       </div>
+
+      {/* ── Season highlights strip (below chart, no overlap) ── */}
     </section>
   )
 }

@@ -1,6 +1,5 @@
 import HeroHeader from './components/HeroHeader'
 import UsageBarChart from './components/UsageBarChart'
-import PeerComparison from './components/PeerComparison'
 import SmartRecommendation from './components/SmartRecommendation'
 import TrustTimeline from './components/TrustTimeline'
 
@@ -16,7 +15,6 @@ export default function App() {
       >
         <HeroHeader />
         <UsageBarChart />
-        <PeerComparison />
         <SmartRecommendation />
         <TrustTimeline />
 

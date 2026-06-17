@@ -173,18 +173,6 @@ export default function TrustTimeline() {
       </div>
 
       {/* Privacy note */}
-      <p
-        style={{
-          textAlign: 'center',
-          marginTop: 28,
-          fontSize: 12,
-          color: 'var(--text-3)',
-          maxWidth: 460,
-          margin: '28px auto 0',
-        }}
-      >
-        Your data is never shared. Peer comparisons are anonymised and aggregated across similar households.
-      </p>
     </section>
   )
 }
